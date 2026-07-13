@@ -1,5 +1,6 @@
 package com.shopsphere.backend.controller;
 
+import com.shopsphere.backend.dto.ProductDTO;
 import com.shopsphere.backend.entity.Product;
 import com.shopsphere.backend.service.ProductService;
 import jakarta.validation.Valid;
@@ -12,41 +13,47 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
+@CrossOrigin(origins = "*")
 public class ProductController {
 
     @Autowired
     private ProductService productService;
 
+    // Save Product
     @PostMapping
-    public ResponseEntity<Product> saveProduct(@Valid @RequestBody Product product) {
-
-        Product savedProduct = productService.saveProduct(product);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
+    public ResponseEntity<ProductDTO> saveProduct(@Valid @RequestBody ProductDTO productDTO) {
+        ProductDTO savedProduct = productService.saveProduct(productDTO);
+        return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
 
+    // Get All Products
+    @GetMapping
+    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+        List<ProductDTO> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    // Get Product By Id
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
+        ProductDTO product = productService.getProductById(id);
+        return ResponseEntity.ok(product);
+    }
+
+    // Update Product
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long id,
-                                                 @Valid @RequestBody Product product) {
+                                                 @RequestBody Product product) {
 
         Product updatedProduct = productService.updateProduct(id, product);
-
         return ResponseEntity.ok(updatedProduct);
     }
 
-    @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.getProductById(id));
-    }
-
+    // Delete Product
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
+
         productService.deleteProduct(id);
-        return ResponseEntity.ok("Product Deleted Successfully");
+        return ResponseEntity.ok("Product deleted successfully");
     }
 }

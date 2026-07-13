@@ -1,11 +1,15 @@
 package com.shopsphere.backend.serviceImpl;
 
+import com.shopsphere.backend.dto.ProductDTO;
 import com.shopsphere.backend.entity.Product;
+import com.shopsphere.backend.exception.ResourceNotFoundException;
 import com.shopsphere.backend.repository.ProductRepository;
 import com.shopsphere.backend.service.ProductService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -14,9 +18,17 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @Override
-    public Product saveProduct(Product product) {
-        return productRepository.save(product);
+    public ProductDTO saveProduct(ProductDTO productDTO) {
+
+        Product product = modelMapper.map(productDTO, Product.class);
+
+        Product savedProduct = productRepository.save(product);
+
+        return modelMapper.map(savedProduct, ProductDTO.class);
     }
 
     @Override
@@ -24,29 +36,46 @@ public class ProductServiceImpl implements ProductService {
 
         Product existingProduct = productRepository.findById(id).orElse(null);
 
-        if (existingProduct != null) {
-            existingProduct.setTitle(product.getTitle());
-            existingProduct.setDescription(product.getDescription());
-            existingProduct.setPrice(product.getPrice());
-            existingProduct.setQuantity(product.getQuantity());
-            existingProduct.setImageUrl(product.getImageUrl());
-            existingProduct.setBrand(product.getBrand());
-            existingProduct.setCategory(product.getCategory());
-
-            return productRepository.save(existingProduct);
+        if (existingProduct == null) {
+            return null;
         }
 
-        return null;
+        existingProduct.setTitle(product.getTitle());
+        existingProduct.setDescription(product.getDescription());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setQuantity(product.getQuantity());
+        existingProduct.setImageUrl(product.getImageUrl());
+        existingProduct.setBrand(product.getBrand());
+        existingProduct.setCategory(product.getCategory());
+
+        Product updatedProduct = productRepository.save(existingProduct);
+
+        return updatedProduct;
     }
 
     @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductDTO> getAllProducts() {
+
+        List<Product> products = productRepository.findAll();
+
+        List<ProductDTO> productDTOList = new ArrayList<>();
+
+        for (Product product : products) {
+            productDTOList.add(modelMapper.map(product, ProductDTO.class));
+        }
+
+        return productDTOList;
     }
 
     @Override
-    public Product getProductById(Long id) {
-        return productRepository.findById(id).orElse(null);
+    public ProductDTO getProductById(Long id) {
+
+        Product product = productRepository.findById(id).orElse(null);
+if(product==null){
+    throw new ResourceNotFoundException("Product not found with id : " + id);
+}
+
+        return modelMapper.map(product, ProductDTO.class);
     }
 
     @Override
