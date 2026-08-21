@@ -1,0 +1,212 @@
+.footer {
+  width: 100%;
+
+  background: #1d2925;
+
+  color: white;
+
+  padding-top: 70px;
+}
+
+
+.footer-container {
+  width: 90%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+
+  gap: 50px;
+
+  padding-bottom: 60px;
+}
+
+
+/* Brand */
+
+.footer-logo {
+  display: inline-block;
+
+  margin-bottom: 18px;
+
+  color: white;
+
+  text-decoration: none;
+
+  font-size: 27px;
+
+  font-weight: 600;
+}
+
+.footer-brand p {
+  max-width: 280px;
+
+  margin: 0;
+
+  color: #bfc8c4;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+/* Columns */
+
+.footer-column {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+.footer-column h3 {
+  margin: 0 0 12px;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  color: white;
+}
+
+.footer-column a {
+  width: fit-content;
+
+  color: #bfc8c4;
+
+  text-decoration: none;
+
+  font-size: 14px;
+
+  transition: 0.3s;
+}
+
+.footer-column a:hover {
+  color: white;
+
+  transform: translateX(3px);
+}
+
+
+/* Social */
+
+.social-links {
+  display: flex;
+
+  gap: 18px;
+
+  margin-top: 25px;
+}
+
+.social-links a {
+  color: #bfc8c4;
+
+  font-size: 13px;
+
+  text-decoration: none;
+
+  transition: 0.3s;
+}
+
+.social-links a:hover {
+  color: white;
+}
+
+
+/* Bottom */
+
+.footer-bottom {
+  width: 90%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  padding: 22px 0;
+
+  border-top: 1px solid #3b4743;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.footer-bottom p {
+  margin: 0;
+
+  font-size: 12px;
+
+  color: #9fa9a5;
+}
+
+.footer-bottom div {
+  display: flex;
+
+  gap: 20px;
+}
+
+.footer-bottom a {
+  color: #9fa9a5;
+
+  font-size: 12px;
+
+  text-decoration: none;
+}
+
+.footer-bottom a:hover {
+  color: white;
+}
+
+
+/* Tablet */
+
+@media (max-width: 900px) {
+
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 40px;
+  }
+
+}
+
+
+/* Mobile */
+
+@media (max-width: 600px) {
+
+  .footer {
+    padding-top: 50px;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr;
+
+    gap: 35px;
+
+    padding-bottom: 40px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    padding: 20px 0;
+  }
+
+  .footer-bottom div {
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+}

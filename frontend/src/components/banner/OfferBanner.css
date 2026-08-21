@@ -1,0 +1,195 @@
+.offer-section {
+  width: 100%;
+  padding: 80px 0;
+
+  background: #ffffff;
+}
+
+.offer-container {
+  width: 90%;
+  max-width: 1400px;
+
+  min-height: 320px;
+
+  margin: 0 auto;
+
+  padding: 50px 70px;
+
+  border-radius: 24px;
+
+  background: #214d43;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  overflow: hidden;
+
+  position: relative;
+}
+
+
+/* Content */
+
+.offer-content {
+  position: relative;
+  z-index: 2;
+}
+
+.offer-small-text {
+  margin: 0 0 12px;
+
+  font-size: 12px;
+  letter-spacing: 3px;
+
+  color: #d8e3df;
+}
+
+.offer-content h2 {
+  margin: 0;
+
+  font-size: 48px;
+  font-weight: 500;
+
+  color: white;
+}
+
+.offer-content h2 span {
+  color: #e8cfae;
+}
+
+.offer-description {
+  max-width: 480px;
+
+  margin: 18px 0 25px;
+
+  font-size: 15px;
+  line-height: 1.6;
+
+  color: #d8e3df;
+}
+
+
+/* Button */
+
+.offer-button {
+  padding: 13px 28px;
+
+  border: none;
+  border-radius: 25px;
+
+  background: white;
+  color: #214d43;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.offer-button:hover {
+  transform: translateY(-2px);
+}
+
+
+/* Decoration */
+
+.offer-decoration {
+  width: 210px;
+  height: 210px;
+
+  border-radius: 50%;
+
+  background: #e8cfae;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  transform: rotate(-8deg);
+
+  position: relative;
+  z-index: 1;
+}
+
+.offer-decoration span {
+  font-size: 55px;
+  font-weight: 600;
+
+  color: #214d43;
+}
+
+.offer-decoration small {
+  font-size: 18px;
+  letter-spacing: 4px;
+
+  color: #214d43;
+}
+
+
+/* Tablet */
+
+@media (max-width: 900px) {
+
+  .offer-container {
+    padding: 45px;
+  }
+
+  .offer-content h2 {
+    font-size: 38px;
+  }
+
+  .offer-decoration {
+    width: 170px;
+    height: 170px;
+  }
+
+  .offer-decoration span {
+    font-size: 42px;
+  }
+
+}
+
+
+/* Mobile */
+
+@media (max-width: 600px) {
+
+  .offer-section {
+    padding: 60px 0;
+  }
+
+  .offer-container {
+    padding: 40px 25px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 35px;
+  }
+
+  .offer-content h2 {
+    font-size: 34px;
+  }
+
+  .offer-decoration {
+    width: 140px;
+    height: 140px;
+
+    align-self: center;
+  }
+
+  .offer-decoration span {
+    font-size: 35px;
+  }
+
+  .offer-decoration small {
+    font-size: 14px;
+  }
+
+}

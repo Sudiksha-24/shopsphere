@@ -71,9 +71,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO getProductById(Long id) {
 
         Product product = productRepository.findById(id).orElse(null);
-if(product==null){
-    throw new ResourceNotFoundException("Product not found with id : " + id);
-}
+            
+        if(product==null){
+           throw new ResourceNotFoundException("Product not found with id : " + id);
+        }
 
         return modelMapper.map(product, ProductDTO.class);
     }

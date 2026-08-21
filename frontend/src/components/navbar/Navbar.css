@@ -1,0 +1,210 @@
+/* ===== Google Font ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins',sans-serif;
+}
+
+/* =========================== */
+
+.navbar{
+
+    width:100%;
+    background:#fff;
+
+    border-bottom:1px solid #ececec;
+
+    position:sticky;
+    top:0;
+
+    z-index:1000;
+
+}
+
+.navbar-container{
+
+    width:90%;
+    max-width:1400px;
+
+    margin:auto;
+
+    height:80px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+/* =========================== */
+
+.logo{
+
+    font-size:28px;
+
+    font-weight:700;
+
+    color:#111;
+
+    text-decoration:none;
+
+}
+
+/* =========================== */
+
+.navbar-center{
+
+    display:flex;
+
+    gap:40px;
+
+}
+
+.navbar-center a{
+
+    text-decoration:none;
+
+    color:#222;
+
+    font-size:16px;
+
+    font-weight:500;
+
+    transition:.3s;
+
+}
+
+.navbar-center a:hover{
+
+    color:#1e88e5;
+
+}
+
+/* =========================== */
+
+.navbar-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
+
+}
+
+.icon-btn{
+
+    text-decoration:none;
+
+    background:none;
+
+    border:none;
+
+    color:#222;
+
+    cursor:pointer;
+
+    font-size:22px;
+
+    position:relative;
+
+    transition:.3s;
+
+}
+
+.icon-btn:hover{
+
+    color:#1e88e5;
+
+}
+
+.cart-count{
+
+    position:absolute;
+
+    top:-8px;
+
+    right:-10px;
+
+    width:18px;
+
+    height:18px;
+
+    border-radius:50%;
+
+    background:#ff3b30;
+
+    color:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:11px;
+
+    font-weight:600;
+
+}
+
+/* Search Box */
+
+.search-box{
+
+    width:280px;
+
+    height:45px;
+
+    border:1px solid #ddd;
+
+    border-radius:30px;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:0 15px;
+
+    gap:10px;
+
+    transition:.3s;
+
+}
+
+.search-box:hover{
+
+    border-color:#2563eb;
+
+}
+
+.search-icon{
+
+    color:#777;
+
+    font-size:18px;
+
+}
+
+.search-box input{
+
+    width:100%;
+
+    border:none;
+
+    outline:none;
+
+    font-size:15px;
+
+    background:transparent;
+
+}
