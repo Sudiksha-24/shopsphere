@@ -5,6 +5,7 @@ import com.shopsphere.backend.entity.Order;
 import com.shopsphere.backend.repository.AddressRepository;
 import com.shopsphere.backend.service.CheckoutService;
 import com.shopsphere.backend.service.OrderService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,17 +18,35 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Autowired
     private AddressRepository addressRepository;
 
+
     @Override
-    public Order checkout(Long userId, Long addressId) {
+    public Order checkout(
+            Long userId,
+            Long addressId) {
 
-        // Check Address
-        Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Address not found"));
+        // =========================================
+        // CHECK ADDRESS
+        // =========================================
 
-        // Place Order
-        Order order = orderService.placeOrder(userId);
+        Address address =
+                addressRepository.findById(addressId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Address not found"
+                                )
+                        );
 
-        // पुढच्या step मध्ये Order मध्ये Address save करू
+
+        // =========================================
+        // CREATE PENDING ORDER
+        // =========================================
+
+        Order order =
+                orderService.createPendingOrder(
+                        userId
+                );
+
+
         return order;
     }
 }

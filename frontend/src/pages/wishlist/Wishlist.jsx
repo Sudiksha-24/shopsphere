@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Wishlist.css";
 
 function Wishlist() {
+
+  const navigate = useNavigate();
 
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +16,9 @@ function Wishlist() {
   // =====================================
 
   useEffect(() => {
+
     fetchWishlist();
+
   }, []);
 
 
@@ -24,9 +28,15 @@ function Wishlist() {
     const token = localStorage.getItem("token");
 
 
+    // =====================================
+    // LOGIN CHECK
+    // =====================================
+
     if (!userId || !token) {
 
-      setError("Please login to view your wishlist.");
+      setError(
+        "Please login to view your wishlist."
+      );
 
       setLoading(false);
 
@@ -51,15 +61,44 @@ function Wishlist() {
       const text = await response.text();
 
 
+      // =====================================
+      // TOKEN EXPIRED / UNAUTHORIZED
+      // =====================================
+
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+
+        setError(
+          "Your session has expired. Please login again."
+        );
+
+        setLoading(false);
+
+        return;
+      }
+
+
+      // =====================================
+      // OTHER ERROR
+      // =====================================
+
       if (!response.ok) {
 
         throw new Error(
-          text ||
-          `Failed to load wishlist (${response.status})`
+          "Unable to load your wishlist."
         );
 
       }
 
+
+      // =====================================
+      // PARSE RESPONSE
+      // =====================================
 
       const data = text
         ? JSON.parse(text)
@@ -67,12 +106,16 @@ function Wishlist() {
 
 
       console.log(
-        "Wishlist:",
+        "Wishlist response:",
         data
       );
 
 
-      setWishlist(data);
+      setWishlist(
+        Array.isArray(data)
+          ? data
+          : []
+      );
 
 
     } catch (error) {
@@ -82,10 +125,11 @@ function Wishlist() {
         error
       );
 
+
       setError(
-        error.message ||
-        "Unable to load wishlist."
+        "Unable to load your wishlist. Please try again."
       );
+
 
     } finally {
 
@@ -108,6 +152,18 @@ function Wishlist() {
       localStorage.getItem("token");
 
 
+    if (!userId || !token) {
+
+      alert(
+        "Please login first."
+      );
+
+      navigate("/login");
+
+      return;
+    }
+
+
     try {
 
       const response = await fetch(
@@ -127,17 +183,41 @@ function Wishlist() {
         await response.text();
 
 
+      // =====================================
+      // TOKEN EXPIRED
+      // =====================================
+
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+
+        alert(
+          "Your session has expired. Please login again."
+        );
+
+        navigate("/login");
+
+        return;
+      }
+
+
       if (!response.ok) {
 
         throw new Error(
           text ||
-          "Failed to remove wishlist item"
+          "Failed to remove wishlist item."
         );
 
       }
 
 
-      // Remove from UI
+      // =====================================
+      // UPDATE UI
+      // =====================================
 
       setWishlist(
         (previousWishlist) =>
@@ -154,6 +234,7 @@ function Wishlist() {
         "Remove wishlist error:",
         error
       );
+
 
       alert(
         error.message ||
@@ -179,7 +260,11 @@ function Wishlist() {
 
     if (!userId || !token) {
 
-      alert("Please login first.");
+      alert(
+        "Please login first."
+      );
+
+      navigate("/login");
 
       return;
     }
@@ -201,9 +286,15 @@ function Wishlist() {
           },
 
           body: JSON.stringify({
-            userId: Number(userId),
-            productId: product.id,
+
+            userId:
+              Number(userId),
+
+            productId:
+              product.id,
+
             quantity: 1,
+
           }),
         }
       );
@@ -213,11 +304,33 @@ function Wishlist() {
         await response.text();
 
 
+      // =====================================
+      // TOKEN EXPIRED
+      // =====================================
+
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+
+        alert(
+          "Your session has expired. Please login again."
+        );
+
+        navigate("/login");
+
+        return;
+      }
+
+
       if (!response.ok) {
 
         throw new Error(
           text ||
-          "Failed to add product to cart"
+          "Failed to add product to cart."
         );
 
       }
@@ -231,9 +344,10 @@ function Wishlist() {
     } catch (error) {
 
       console.error(
-        "Cart error:",
+        "Add to cart error:",
         error
       );
+
 
       alert(
         error.message ||
@@ -251,28 +365,51 @@ function Wishlist() {
   if (loading) {
 
     return (
-      <div className="wishlist-message">
-        Loading wishlist...
-      </div>
+
+      <section className="wishlist-page">
+
+        <div className="wishlist-message">
+
+          <h2>
+            Loading wishlist...
+          </h2>
+
+        </div>
+
+      </section>
+
     );
 
   }
 
 
   // =====================================
-  // LOGIN / ERROR
+  // ERROR / LOGIN
   // =====================================
 
   if (error) {
 
     return (
+
       <section className="wishlist-page">
 
         <div className="wishlist-message">
 
+          <div className="empty-heart">
+            ♡
+          </div>
+
+
           <h2>
             {error}
           </h2>
+
+
+          <p>
+            Login to save your favorite
+            products and access them anytime.
+          </p>
+
 
           <Link
             to="/login"
@@ -284,13 +421,14 @@ function Wishlist() {
         </div>
 
       </section>
+
     );
 
   }
 
 
   // =====================================
-  // PAGE
+  // MAIN PAGE
   // =====================================
 
   return (
@@ -300,7 +438,9 @@ function Wishlist() {
       <div className="wishlist-container">
 
 
-        {/* HEADER */}
+        {/* =================================
+            HEADER
+        ================================= */}
 
         <div className="wishlist-header">
 
@@ -310,9 +450,11 @@ function Wishlist() {
               SHOPSPHERE
             </p>
 
+
             <h1>
               My Wishlist
             </h1>
+
 
             <span>
               Your favorite products
@@ -322,13 +464,23 @@ function Wishlist() {
 
 
           <span className="wishlist-count">
-            {wishlist.length} Items
+
+            {wishlist.length}
+
+            {" "}
+
+            {wishlist.length === 1
+              ? "Item"
+              : "Items"}
+
           </span>
 
         </div>
 
 
-        {/* EMPTY */}
+        {/* =================================
+            EMPTY WISHLIST
+        ================================= */}
 
         {wishlist.length === 0 ? (
 
@@ -338,14 +490,17 @@ function Wishlist() {
               ♡
             </div>
 
+
             <h2>
               Your wishlist is empty
             </h2>
+
 
             <p>
               Save products you love and
               find them here later.
             </p>
+
 
             <Link
               to="/products"
@@ -359,7 +514,9 @@ function Wishlist() {
         ) : (
 
 
-          /* PRODUCTS */
+          /* =================================
+             WISHLIST PRODUCTS
+          ================================= */
 
           <div className="wishlist-grid">
 
@@ -368,6 +525,8 @@ function Wishlist() {
               const product =
                 item.product;
 
+
+              // Skip invalid item
 
               if (!product) {
                 return null;
@@ -386,38 +545,66 @@ function Wishlist() {
 
                   <div className="wishlist-image">
 
-                    <img
-                      src={`http://localhost:8080/images/${product.imageUrl}`}
-                      alt={product.title}
-                    />
+                    <Link
+                      to={`/product/${product.id}`}
+                    >
+
+                      <img
+                        src={`http://localhost:8080/images/${product.imageUrl}`}
+                        alt={product.title}
+                      />
+
+                    </Link>
 
                   </div>
 
 
-                  {/* INFO */}
+                  {/* PRODUCT INFO */}
 
                   <div className="wishlist-info">
 
+
+                    {/* CATEGORY */}
+
                     <p className="wishlist-category">
+
                       {product.category}
+
                     </p>
 
 
-                    <h2>
-                      {product.title}
-                    </h2>
+                    {/* TITLE */}
 
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="wishlist-product-link"
+                    >
+
+                      <h2>
+                        {product.title}
+                      </h2>
+
+                    </Link>
+
+
+                    {/* BRAND */}
 
                     <p className="wishlist-brand">
+
                       {product.brand}
+
                     </p>
 
 
+                    {/* PRICE */}
+
                     <strong className="wishlist-price">
+
                       ₹
                       {Number(
                         product.price
                       ).toLocaleString("en-IN")}
+
                     </strong>
 
 
@@ -425,24 +612,36 @@ function Wishlist() {
 
                     <div className="wishlist-actions">
 
+
+                      {/* ADD TO CART */}
+
                       <button
+                        type="button"
                         className="wishlist-cart-button"
                         onClick={() =>
-                          handleAddToCart(product)
+                          handleAddToCart(
+                            product
+                          )
                         }
                       >
                         Add to Cart
                       </button>
 
 
+                      {/* REMOVE */}
+
                       <button
+                        type="button"
                         className="wishlist-remove-button"
                         onClick={() =>
-                          handleRemove(product.id)
+                          handleRemove(
+                            product.id
+                          )
                         }
                       >
                         Remove
                       </button>
+
 
                     </div>
 
@@ -461,7 +660,9 @@ function Wishlist() {
       </div>
 
     </section>
+
   );
+
 }
 
 export default Wishlist;

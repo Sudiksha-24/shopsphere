@@ -18,6 +18,7 @@ import com.shopsphere.backend.service.OrderService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,36 +47,31 @@ public class OrderServiceImpl implements OrderService {
 
 
     // =====================================================
-    // PLACE ORDER
+    // OLD PLACE ORDER
     // =====================================================
 
     @Override
+    @Transactional
     public Order placeOrder(Long userId) {
 
-        // -----------------------------------------
-        // Find User
-        // -----------------------------------------
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found")
-                );
-
-
-        // -----------------------------------------
-        // Find Cart WITH Cart Items
-        // -----------------------------------------
-
-        Cart cart = cartRepository
-                .findByUserWithItems(user)
-                .orElseThrow(() ->
-                        new RuntimeException("Cart not found")
-                );
+        User user =
+                userRepository.findById(userId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
 
-        // -----------------------------------------
-        // Check Empty Cart
-        // -----------------------------------------
+        Cart cart =
+                cartRepository
+                        .findByUserWithItems(user)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Cart not found"
+                                )
+                        );
+
 
         if (cart.getCartItems() == null ||
                 cart.getCartItems().isEmpty()) {
@@ -86,15 +82,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
 
-        // -----------------------------------------
-        // Create Order
-        // -----------------------------------------
-
         Order order = new Order();
 
         order.setUser(user);
 
         order.setStatus("PLACED");
+
+        order.setPaymentStatus("SUCCESS");
 
         order.setOrderDate(
                 LocalDateTime.now()
@@ -105,16 +99,9 @@ public class OrderServiceImpl implements OrderService {
         );
 
 
-        // -----------------------------------------
-        // Save Order First
-        // -----------------------------------------
+        order =
+                orderRepository.save(order);
 
-        order = orderRepository.save(order);
-
-
-        // -----------------------------------------
-        // Copy Cart Items → Order Items
-        // -----------------------------------------
 
         for (CartItem cartItem :
                 cart.getCartItems()) {
@@ -124,21 +111,14 @@ public class OrderServiceImpl implements OrderService {
                     cartItem.getProduct();
 
 
-            // -----------------------------------------
-            // Product Check
-            // -----------------------------------------
-
             if (product == null) {
 
                 throw new RuntimeException(
                         "Product not found in cart"
                 );
+
             }
 
-
-            // -----------------------------------------
-            // Stock Check
-            // -----------------------------------------
 
             if (product.getQuantity() <
                     cartItem.getQuantity()) {
@@ -147,12 +127,11 @@ public class OrderServiceImpl implements OrderService {
                         product.getTitle()
                                 + " is out of stock"
                 );
+
             }
 
 
-            // -----------------------------------------
-            // Reduce Product Stock
-            // -----------------------------------------
+            // Reduce stock
 
             product.setQuantity(
                     product.getQuantity()
@@ -162,9 +141,7 @@ public class OrderServiceImpl implements OrderService {
             productRepository.save(product);
 
 
-            // -----------------------------------------
-            // Create Order Item
-            // -----------------------------------------
+            // Create order item
 
             OrderItem orderItem =
                     new OrderItem();
@@ -182,25 +159,18 @@ public class OrderServiceImpl implements OrderService {
             );
 
 
-            // -----------------------------------------
-            // Save Order Item
-            // -----------------------------------------
-
             orderItemRepository.save(
                     orderItem
             );
 
 
-            // Add to Order List
-
             order.getOrderItems()
                     .add(orderItem);
+
         }
 
 
-        // -----------------------------------------
-        // Clear Cart
-        // -----------------------------------------
+        // Clear cart
 
         cartItemRepository.deleteAll(
                 cart.getCartItems()
@@ -210,17 +180,267 @@ public class OrderServiceImpl implements OrderService {
 
         cart.setTotalPrice(0.0);
 
-
-        // -----------------------------------------
-        // Save Empty Cart
-        // -----------------------------------------
-
         cartRepository.save(cart);
 
 
-        // -----------------------------------------
-        // Return Order
-        // -----------------------------------------
+        return orderRepository.save(order);
+    }
+
+
+    // =====================================================
+    // CREATE PENDING ORDER
+    // =====================================================
+
+    @Override
+    @Transactional
+    public Order createPendingOrder(Long userId) {
+
+        User user =
+                userRepository.findById(userId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found"
+                                )
+                        );
+
+
+        Cart cart =
+                cartRepository
+                        .findByUserWithItems(user)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Cart not found"
+                                )
+                        );
+
+
+        // Check cart
+
+        if (cart.getCartItems() == null ||
+                cart.getCartItems().isEmpty()) {
+
+            throw new RuntimeException(
+                    "Cart is empty"
+            );
+
+        }
+
+
+        // Check stock BEFORE creating order
+
+        for (CartItem cartItem :
+                cart.getCartItems()) {
+
+            Product product =
+                    cartItem.getProduct();
+
+
+            if (product == null) {
+
+                throw new RuntimeException(
+                        "Product not found in cart"
+                );
+
+            }
+
+
+            if (product.getQuantity() <
+                    cartItem.getQuantity()) {
+
+                throw new RuntimeException(
+                        product.getTitle()
+                                + " is out of stock"
+                );
+
+            }
+
+        }
+
+
+        // =========================================
+        // CREATE ORDER
+        // =========================================
+
+        Order order = new Order();
+
+        order.setUser(user);
+
+        order.setStatus("PENDING");
+
+        order.setPaymentStatus("PENDING");
+
+        order.setOrderDate(
+                LocalDateTime.now()
+        );
+
+        order.setTotalPrice(
+                cart.getTotalPrice()
+        );
+
+
+        order =
+                orderRepository.save(order);
+
+
+        // =========================================
+        // COPY CART ITEMS
+        // =========================================
+
+        for (CartItem cartItem :
+                cart.getCartItems()) {
+
+            Product product =
+                    cartItem.getProduct();
+
+
+            OrderItem orderItem =
+                    new OrderItem();
+
+            orderItem.setOrder(order);
+
+            orderItem.setProduct(product);
+
+            orderItem.setQuantity(
+                    cartItem.getQuantity()
+            );
+
+            orderItem.setPrice(
+                    product.getPrice()
+            );
+
+
+            orderItemRepository.save(
+                    orderItem
+            );
+
+
+            order.getOrderItems()
+                    .add(orderItem);
+
+        }
+
+
+        return orderRepository.save(order);
+    }
+
+
+    // =====================================================
+    // COMPLETE ORDER AFTER PAYMENT
+    // =====================================================
+
+    @Override
+    @Transactional
+    public Order completeOrderAfterPayment(
+            Long orderId) {
+
+        Order order =
+                orderRepository.findById(orderId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Order not found"
+                                )
+                        );
+
+
+        // Already completed
+
+        if ("SUCCESS".equals(
+                order.getPaymentStatus())) {
+
+            return order;
+
+        }
+
+
+        // =========================================
+        // REDUCE STOCK
+        // =========================================
+
+        for (OrderItem orderItem :
+                order.getOrderItems()) {
+
+            Product product =
+                    orderItem.getProduct();
+
+
+            if (product == null) {
+
+                throw new RuntimeException(
+                        "Product not found in order"
+                );
+
+            }
+
+
+            if (product.getQuantity() <
+                    orderItem.getQuantity()) {
+
+                throw new RuntimeException(
+                        product.getTitle()
+                                + " is out of stock"
+                );
+
+            }
+
+
+            product.setQuantity(
+                    product.getQuantity()
+                            - orderItem.getQuantity()
+            );
+
+
+            productRepository.save(
+                    product
+            );
+
+        }
+
+
+        // =========================================
+        // PAYMENT SUCCESS
+        // =========================================
+
+        order.setPaymentStatus(
+                "SUCCESS"
+        );
+
+
+        order.setStatus(
+                "PLACED"
+        );
+
+
+        return orderRepository.save(order);
+    }
+
+
+    // =====================================================
+    // PAYMENT FAILED
+    // =====================================================
+
+    @Override
+    @Transactional
+    public Order failOrderPayment(
+            Long orderId) {
+
+        Order order =
+                orderRepository.findById(orderId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Order not found"
+                                )
+                        );
+
+
+        order.setPaymentStatus(
+                "FAILED"
+        );
+
+
+        order.setStatus(
+                "PAYMENT_FAILED"
+        );
+
 
         return orderRepository.save(order);
     }
@@ -231,14 +451,17 @@ public class OrderServiceImpl implements OrderService {
     // =====================================================
 
     @Override
-    public List<Order> getOrdersByUser(Long userId) {
+    public List<Order> getOrdersByUser(
+            Long userId) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "User not found"
-                        )
-                );
+        User user =
+                userRepository.findById(userId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found"
+                                )
+                        );
+
 
         return orderRepository.findByUser(user);
     }
@@ -249,11 +472,12 @@ public class OrderServiceImpl implements OrderService {
     // =====================================================
 
     @Override
-    public Order getOrderById(Long orderId) {
+    public Order getOrderById(
+            Long orderId) {
 
         return orderRepository.findById(orderId)
-                .orElseThrow(() ->
-                        new RuntimeException(
+                .orElseThrow(
+                        () -> new RuntimeException(
                                 "Order not found"
                         )
                 );
@@ -265,19 +489,18 @@ public class OrderServiceImpl implements OrderService {
     // =====================================================
 
     @Override
-    public Order cancelOrder(Long orderId) {
+    @Transactional
+    public Order cancelOrder(
+            Long orderId) {
 
-        // Find Order
+        Order order =
+                orderRepository.findById(orderId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Order not found"
+                                )
+                        );
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Order not found"
-                        )
-                );
-
-
-        // Already Cancelled
 
         if ("CANCELLED".equals(
                 order.getStatus())) {
@@ -285,35 +508,38 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException(
                     "Order already cancelled"
             );
+
         }
 
 
-        // -----------------------------------------
-        // Restore Product Stock
-        // -----------------------------------------
+        // =========================================
+        // RESTORE STOCK ONLY IF PAYMENT SUCCESS
+        // =========================================
 
-        for (OrderItem item :
-                order.getOrderItems()) {
+        if ("SUCCESS".equals(
+                order.getPaymentStatus())) {
 
-            Product product =
-                    item.getProduct();
+            for (OrderItem item :
+                    order.getOrderItems()) {
 
-
-            product.setQuantity(
-                    product.getQuantity()
-                            + item.getQuantity()
-            );
+                Product product =
+                        item.getProduct();
 
 
-            productRepository.save(
-                    product
-            );
+                product.setQuantity(
+                        product.getQuantity()
+                                + item.getQuantity()
+                );
+
+
+                productRepository.save(
+                        product
+                );
+
+            }
+
         }
 
-
-        // -----------------------------------------
-        // Update Order Status
-        // -----------------------------------------
 
         order.setStatus(
                 "CANCELLED"
@@ -344,12 +570,13 @@ public class OrderServiceImpl implements OrderService {
             Long orderId,
             String status) {
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Order not found"
-                        )
-                );
+        Order order =
+                orderRepository.findById(orderId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Order not found"
+                                )
+                        );
 
 
         order.setStatus(status);
@@ -357,5 +584,4 @@ public class OrderServiceImpl implements OrderService {
 
         return orderRepository.save(order);
     }
-
 }

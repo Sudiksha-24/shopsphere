@@ -50,24 +50,41 @@ function Login() {
       }
 
 
-      const data = await response.json();
+     const data = await response.json();
 
-      console.log("Login response:", data);
-
-
-      // Save JWT token
-      localStorage.setItem(
-        "token",
-        data.token
-      );
+console.log("========== LOGIN RESPONSE ==========");
+console.log("FULL RESPONSE:", data);
+console.log("TOKEN:", data.token);
+console.log("USER ID:", data.userId);
+console.log("JWT:", data.jwt);
+console.log("ID:", data.id);
 
 
-      // Save logged-in user ID
-      localStorage.setItem(
-        "userId",
-        data.userId
-      );
+// Save token
+if (data.token) {
+  localStorage.setItem("token", data.token);
+} else if (data.jwt) {
+  localStorage.setItem("token", data.jwt);
+}
 
+
+// Save user ID
+if (data.userId) {
+  localStorage.setItem("userId", data.userId);
+} else if (data.id) {
+  localStorage.setItem("userId", data.id);
+}
+
+
+console.log(
+  "SAVED TOKEN:",
+  localStorage.getItem("token")
+);
+
+console.log(
+  "SAVED USER ID:",
+  localStorage.getItem("userId")
+);
 
       // Success message
       setSuccess(

@@ -1,5 +1,7 @@
 package com.shopsphere.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -29,6 +31,7 @@ public class Wishlist {
         name = "user_id",
         nullable = false
     )
+    @JsonIgnore
     private User user;
 
 
@@ -36,10 +39,14 @@ public class Wishlist {
     // PRODUCT
     // =========================
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(
         name = "product_id",
         nullable = false
     )
+    @JsonIgnoreProperties({
+        "hibernateLazyInitializer",
+        "handler"
+    })
     private Product product;
 }

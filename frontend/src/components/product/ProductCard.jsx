@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./ProductCard.css";
 
 function ProductCard({ product }) {
@@ -6,6 +7,14 @@ function ProductCard({ product }) {
   const [isWishlist, setIsWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
+
+
+  // =====================================
+  // PRODUCT DETAILS URL
+  // =====================================
+
+  const productDetailsUrl =
+    `/products/${product.id}`;
 
 
   // =====================================
@@ -21,11 +30,17 @@ function ProductCard({ product }) {
 
   const checkWishlist = async () => {
 
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+    const userId =
+      localStorage.getItem("userId");
+
+    const token =
+      localStorage.getItem("token");
+
 
     if (!userId || !token) {
+
       setIsWishlist(false);
+
       return;
     }
 
@@ -38,7 +53,8 @@ function ProductCard({ product }) {
           method: "GET",
 
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization:
+              `Bearer ${token}`,
           },
         }
       );
@@ -55,9 +71,26 @@ function ProductCard({ product }) {
       }
 
 
-      const data = await response.json();
+      const text =
+        await response.text();
 
-      setIsWishlist(data);
+
+      if (!text.trim()) {
+
+        setIsWishlist(false);
+
+        return;
+      }
+
+
+      const data =
+        JSON.parse(text);
+
+
+      setIsWishlist(
+        Boolean(data)
+      );
+
 
     } catch (error) {
 
@@ -74,17 +107,30 @@ function ProductCard({ product }) {
   // ADD / REMOVE WISHLIST
   // =====================================
 
-  const handleWishlist = async () => {
+  const handleWishlist = async (
+    event
+  ) => {
 
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+    // Prevent product details navigation
+
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
 
 
-    // User login check
+    const userId =
+      localStorage.getItem("userId");
+
+    const token =
+      localStorage.getItem("token");
+
 
     if (!userId || !token) {
 
-      alert("Please login first.");
+      alert(
+        "Please login first."
+      );
 
       return;
     }
@@ -100,23 +146,24 @@ function ProductCard({ product }) {
 
     try {
 
-
       // =================================
-      // REMOVE FROM WISHLIST
+      // REMOVE
       // =================================
 
       if (isWishlist) {
 
-        const response = await fetch(
-          `http://localhost:8080/api/wishlist/remove?userId=${userId}&productId=${product.id}`,
-          {
-            method: "DELETE",
+        const response =
+          await fetch(
+            `http://localhost:8080/api/wishlist/remove?userId=${userId}&productId=${product.id}`,
+            {
+              method: "DELETE",
 
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
 
 
         const text =
@@ -135,6 +182,7 @@ function ProductCard({ product }) {
 
         setIsWishlist(false);
 
+
         alert(
           `${product.title} removed from wishlist`
         );
@@ -143,21 +191,23 @@ function ProductCard({ product }) {
 
 
       // =================================
-      // ADD TO WISHLIST
+      // ADD
       // =================================
 
       else {
 
-        const response = await fetch(
-          `http://localhost:8080/api/wishlist/add?userId=${userId}&productId=${product.id}`,
-          {
-            method: "POST",
+        const response =
+          await fetch(
+            `http://localhost:8080/api/wishlist/add?userId=${userId}&productId=${product.id}`,
+            {
+              method: "POST",
 
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
 
 
         const text =
@@ -174,13 +224,8 @@ function ProductCard({ product }) {
         }
 
 
-        console.log(
-          "Wishlist response:",
-          text
-        );
-
-
         setIsWishlist(true);
+
 
         alert(
           `${product.title} added to wishlist ❤️`
@@ -214,17 +259,30 @@ function ProductCard({ product }) {
   // ADD TO CART
   // =====================================
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (
+    event
+  ) => {
 
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+    // Prevent product details navigation
+
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
 
 
-    // User login check
+    const userId =
+      localStorage.getItem("userId");
+
+    const token =
+      localStorage.getItem("token");
+
 
     if (!userId || !token) {
 
-      alert("Please login first.");
+      alert(
+        "Please login first."
+      );
 
       return;
     }
@@ -240,26 +298,33 @@ function ProductCard({ product }) {
 
     try {
 
-      const response = await fetch(
-        "http://localhost:8080/api/cart/add",
-        {
-          method: "POST",
+      const response =
+        await fetch(
+          "http://localhost:8080/api/cart/add",
+          {
+            method: "POST",
 
-          headers: {
-            "Content-Type": "application/json",
+            headers: {
+              "Content-Type":
+                "application/json",
 
-            "Authorization": `Bearer ${token}`,
-          },
+              Authorization:
+                `Bearer ${token}`,
+            },
 
-          body: JSON.stringify({
-            userId: Number(userId),
+            body: JSON.stringify({
 
-            productId: product.id,
+              userId:
+                Number(userId),
 
-            quantity: 1,
-          }),
-        }
-      );
+              productId:
+                product.id,
+
+              quantity: 1,
+
+            }),
+          }
+        );
 
 
       const text =
@@ -268,24 +333,12 @@ function ProductCard({ product }) {
 
       if (!response.ok) {
 
-        console.error(
-          "Cart error:",
-          text
-        );
-
-
         throw new Error(
           text ||
           `Failed to add product to cart (${response.status})`
         );
 
       }
-
-
-      console.log(
-        "Cart response:",
-        text
-      );
 
 
       alert(
@@ -306,7 +359,6 @@ function ProductCard({ product }) {
         "Unable to add product to cart."
       );
 
-
     } finally {
 
       setCartLoading(false);
@@ -324,31 +376,59 @@ function ProductCard({ product }) {
     <div className="product-card">
 
 
-      {/* ================================
+      {/* =================================
           PRODUCT IMAGE
       ================================= */}
 
       <div className="product-image-wrapper">
 
 
-        <img
-          src={`http://localhost:8080/images/${product.imageUrl}`}
-          alt={product.title}
-          className="product-image"
-        />
+        {/* IMAGE */}
+
+        <Link
+          to={productDetailsUrl}
+          className="product-image-link"
+        >
+
+          <img
+            src={
+              `http://localhost:8080/images/${product.imageUrl}`
+            }
+
+            alt={
+              product.title ||
+              "Product"
+            }
+
+            className="product-image"
+          />
+
+        </Link>
 
 
-        {/* WISHLIST */}
+        {/* =================================
+            WISHLIST
+        ================================= */}
 
         <button
           type="button"
-          className={`wishlist-button ${
-            isWishlist
-              ? "wishlist-active"
-              : ""
-          }`}
-          onClick={handleWishlist}
-          disabled={wishlistLoading}
+
+          className={
+            `wishlist-button ${
+              isWishlist
+                ? "wishlist-active"
+                : ""
+            }`
+          }
+
+          onClick={
+            handleWishlist
+          }
+
+          disabled={
+            wishlistLoading
+          }
+
           title={
             isWishlist
               ? "Remove from wishlist"
@@ -356,7 +436,9 @@ function ProductCard({ product }) {
           }
         >
 
-          {isWishlist ? "♥" : "♡"}
+          {isWishlist
+            ? "♥"
+            : "♡"}
 
         </button>
 
@@ -364,7 +446,7 @@ function ProductCard({ product }) {
       </div>
 
 
-      {/* ================================
+      {/* =================================
           PRODUCT INFORMATION
       ================================= */}
 
@@ -380,9 +462,16 @@ function ProductCard({ product }) {
 
         {/* TITLE */}
 
-        <h3 className="product-title">
-          {product.title}
-        </h3>
+        <Link
+          to={productDetailsUrl}
+          className="product-title-link"
+        >
+
+          <h3 className="product-title">
+            {product.title}
+          </h3>
+
+        </Link>
 
 
         {/* BRAND */}
@@ -392,7 +481,7 @@ function ProductCard({ product }) {
         </p>
 
 
-        {/* ================================
+        {/* =================================
             PRICE + CART
         ================================= */}
 
@@ -405,8 +494,10 @@ function ProductCard({ product }) {
 
             ₹
             {Number(
-              product.price
-            ).toLocaleString("en-IN")}
+              product.price || 0
+            ).toLocaleString(
+              "en-IN"
+            )}
 
           </span>
 
@@ -415,9 +506,16 @@ function ProductCard({ product }) {
 
           <button
             type="button"
+
             className="add-cart-button"
-            onClick={handleAddToCart}
-            disabled={cartLoading}
+
+            onClick={
+              handleAddToCart
+            }
+
+            disabled={
+              cartLoading
+            }
           >
 
             {cartLoading
@@ -432,8 +530,11 @@ function ProductCard({ product }) {
 
       </div>
 
+
     </div>
+
   );
+
 }
 
 export default ProductCard;

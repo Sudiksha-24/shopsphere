@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Checkout.css";
 
 function Checkout() {
+
   const navigate = useNavigate();
 
   const [addresses, setAddresses] = useState([]);
@@ -13,290 +14,743 @@ function Checkout() {
 
   const [error, setError] = useState("");
 
-  // =========================
+
+  // =========================================
   // LOAD ADDRESSES
-  // =========================
+  // =========================================
 
   useEffect(() => {
+
     fetchAddresses();
+
   }, []);
 
-  const fetchAddresses = async () => {
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
 
-    console.log("USER ID:", userId);
-    console.log("TOKEN:", token);
+  const fetchAddresses = async () => {
+
+    const userId =
+      localStorage.getItem("userId");
+
+    const token =
+      localStorage.getItem("token");
+
 
     if (!userId || !token) {
-      setError("Please login first.");
+
+      setError(
+        "Please login first."
+      );
+
       setLoading(false);
+
       return;
+
     }
 
+
     try {
+
       const response = await fetch(
         `http://localhost:8080/api/address/user/${userId}`,
         {
           method: "GET",
+
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            Authorization:
+              `Bearer ${token}`,
+
+            "Content-Type":
+              "application/json",
           },
         }
       );
 
-      console.log(
-        "Address API Status:",
-        response.status
-      );
 
-      // Read response as text first
-      const responseText = await response.text();
+      const responseText =
+        await response.text();
 
-      console.log(
-        "Address API Response:",
-        responseText
-      );
 
-      // Check HTTP status
       if (!response.ok) {
+
         throw new Error(
           responseText ||
-            `Failed to load addresses (${response.status})`
+          `Failed to load addresses (${response.status})`
         );
+
       }
 
-      // Empty response = empty array
+
       let data = [];
 
-      if (responseText.trim() !== "") {
+
+      if (
+        responseText &&
+        responseText.trim()
+      ) {
+
         try {
-          data = JSON.parse(responseText);
-        } catch (jsonError) {
+
+          data =
+            JSON.parse(responseText);
+
+        } catch (parseError) {
+
           console.error(
-            "Address JSON Parse Error:",
-            jsonError
+            "Address JSON parse error:",
+            parseError
           );
 
-          throw new Error(
-            "Invalid response received from Address API."
-          );
+          data = [];
+
         }
+
       }
 
-      console.log(
-        "ADDRESS DATA:",
-        data
-      );
 
-      // Make sure we have an array
       if (Array.isArray(data)) {
+
         setAddresses(data);
+
       } else {
+
         setAddresses([]);
+
       }
+
 
     } catch (error) {
+
       console.error(
         "Address fetch error:",
         error
       );
 
+
       setError(
         error.message ||
-          "Unable to load addresses."
+        "Unable to load addresses."
       );
 
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
 
-  // =========================
-  // PLACE ORDER
-  // =========================
+  // =========================================
+  // CREATE ORDER + PAYMENT
+  // =========================================
 
   const placeOrder = async () => {
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+
+    const userId =
+      localStorage.getItem("userId");
+
+    const token =
+      localStorage.getItem("token");
+
 
     if (!userId || !token) {
-      alert("Please login first.");
+
+      alert(
+        "Please login first."
+      );
+
+      navigate("/login");
+
       return;
+
     }
+
 
     if (!selectedAddress) {
-      alert("Please select a delivery address.");
+
+      alert(
+        "Please select a delivery address."
+      );
+
+      return;
+
+    }
+
+
+    if (!window.Razorpay) {
+
+      alert(
+        "Razorpay is not loaded. Please refresh the page."
+      );
+
+      return;
+
+    }
+
+
+    if (placingOrder) {
       return;
     }
 
+
     try {
+
       setPlacingOrder(true);
 
-      console.log(
-        "Placing order..."
-      );
+
+      // =====================================
+      // STEP 1
+      // CREATE PENDING ORDER
+      // =====================================
 
       console.log(
-        "User ID:",
-        userId
+        "Creating pending ShopSphere order..."
       );
+
+
+      const checkoutResponse =
+        await fetch(
+          "http://localhost:8080/api/checkout",
+          {
+            method: "POST",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+
+              userId:
+                Number(userId),
+
+              addressId:
+                Number(selectedAddress),
+
+            }),
+
+          }
+        );
+
+
+      const checkoutText =
+        await checkoutResponse.text();
+
 
       console.log(
-        "Address ID:",
-        selectedAddress
+        "Checkout response:",
+        checkoutText
       );
 
-      const response = await fetch(
-        "http://localhost:8080/api/checkout",
-        {
-          method: "POST",
 
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+      if (!checkoutResponse.ok) {
+
+        throw new Error(
+          checkoutText ||
+          `Checkout failed (${checkoutResponse.status})`
+        );
+
+      }
+
+
+      if (
+        !checkoutText ||
+        !checkoutText.trim()
+      ) {
+
+        throw new Error(
+          "Checkout returned an empty response."
+        );
+
+      }
+
+
+      let order;
+
+
+      try {
+
+        order =
+          JSON.parse(
+            checkoutText
+          );
+
+      } catch (parseError) {
+
+        console.error(
+          "Checkout JSON error:",
+          parseError
+        );
+
+        throw new Error(
+          "Invalid order response from server."
+        );
+
+      }
+
+
+      console.log(
+        "Pending ShopSphere Order:",
+        order
+      );
+
+
+      if (
+        !order ||
+        !order.id
+      ) {
+
+        throw new Error(
+          "Order ID was not received."
+        );
+
+      }
+
+
+      // =====================================
+      // STEP 2
+      // CREATE RAZORPAY ORDER
+      // =====================================
+
+      console.log(
+        "Creating Razorpay order..."
+      );
+
+
+      const paymentResponse =
+        await fetch(
+          "http://localhost:8080/api/payment/create",
+          {
+            method: "POST",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+
+              orderId:
+                Number(order.id),
+
+            }),
+
+          }
+        );
+
+
+      const paymentText =
+        await paymentResponse.text();
+
+
+      console.log(
+        "Payment create response:",
+        paymentText
+      );
+
+
+      if (!paymentResponse.ok) {
+
+        throw new Error(
+          paymentText ||
+          `Payment creation failed (${paymentResponse.status})`
+        );
+
+      }
+
+
+      if (
+        !paymentText ||
+        !paymentText.trim()
+      ) {
+
+        throw new Error(
+          "Payment server returned an empty response."
+        );
+
+      }
+
+
+      let paymentData;
+
+
+      try {
+
+        paymentData =
+          JSON.parse(
+            paymentText
+          );
+
+      } catch (parseError) {
+
+        console.error(
+          "Payment JSON error:",
+          parseError
+        );
+
+        throw new Error(
+          "Invalid payment response from server."
+        );
+
+      }
+
+
+      console.log(
+        "Razorpay Data:",
+        paymentData
+      );
+
+
+      if (
+        !paymentData.razorpayOrderId ||
+        !paymentData.key
+      ) {
+
+        throw new Error(
+          "Invalid Razorpay response."
+        );
+
+      }
+
+
+      // =====================================
+      // STEP 3
+      // RAZORPAY OPTIONS
+      // =====================================
+
+      const razorpayOptions = {
+
+        key:
+          paymentData.key,
+
+        amount:
+          Math.round(
+            Number(
+              paymentData.amount
+            ) * 100
+          ),
+
+        currency:
+          "INR",
+
+        name:
+          "ShopSphere",
+
+        description:
+          `Payment for Order #${order.id}`,
+
+        order_id:
+          paymentData.razorpayOrderId,
+
+
+        // ===================================
+        // CUSTOMER
+        // ===================================
+
+        prefill: {
+
+          name:
+            localStorage.getItem(
+              "userName"
+            ) || "",
+
+          email:
+            localStorage.getItem(
+              "userEmail"
+            ) || "",
+
+        },
+
+
+        notes: {
+
+          orderId:
+            String(order.id),
+
+        },
+
+
+        theme: {
+
+          color:
+            "#214d43",
+
+        },
+
+
+        // ===================================
+        // PAYMENT SUCCESS
+        // ===================================
+
+        handler:
+          async function (
+            razorpayResponse
+          ) {
+
+            console.log(
+              "Razorpay success:",
+              razorpayResponse
+            );
+
+
+            try {
+
+              // =================================
+              // STEP 4
+              // VERIFY PAYMENT
+              // =================================
+
+              const verifyResponse =
+                await fetch(
+                  "http://localhost:8080/api/payment/verify",
+                  {
+                    method: "POST",
+
+                    headers: {
+                      Authorization:
+                        `Bearer ${token}`,
+
+                      "Content-Type":
+                        "application/json",
+                    },
+
+                    body: JSON.stringify({
+
+                      orderId:
+                        Number(order.id),
+
+                      razorpayPaymentId:
+                        razorpayResponse.razorpay_payment_id,
+
+                      razorpayOrderId:
+                        razorpayResponse.razorpay_order_id,
+
+                      razorpaySignature:
+                        razorpayResponse.razorpay_signature,
+
+                    }),
+
+                  }
+                );
+
+
+              const verifyText =
+                await verifyResponse.text();
+
+
+              console.log(
+                "Payment verification:",
+                verifyText
+              );
+
+
+              if (!verifyResponse.ok) {
+
+                throw new Error(
+                  verifyText ||
+                  "Payment verification failed."
+                );
+
+              }
+
+
+              // =================================
+              // SUCCESS
+              // =================================
+
+              alert(
+                `Payment successful! Order #${order.id}`
+              );
+
+
+              navigate(
+                `/orders/${order.id}`
+              );
+
+
+            } catch (error) {
+
+              console.error(
+                "Payment verification error:",
+                error
+              );
+
+
+              alert(
+                error.message ||
+                "Payment verification failed."
+              );
+
+
+            } finally {
+
+              setPlacingOrder(false);
+
+            }
+
           },
 
-          body: JSON.stringify({
-            userId: Number(userId),
-            addressId: Number(selectedAddress),
-          }),
-        }
-      );
+
+        // =====================================
+        // MODAL CLOSED
+        // =====================================
+
+        modal: {
+
+          ondismiss:
+            function () {
+
+              console.log(
+                "Razorpay payment window closed."
+              );
+
+              setPlacingOrder(false);
+
+            },
+
+        },
+
+      };
+
+
+      // =====================================
+      // STEP 5
+      // OPEN RAZORPAY
+      // =====================================
 
       console.log(
-        "Checkout API Status:",
-        response.status
+        "Opening Razorpay..."
       );
 
-      // Read as text first
-      const responseText = await response.text();
 
-      console.log(
-        "Checkout API Response:",
-        responseText
-      );
-
-      // Check status
-      if (!response.ok) {
-        throw new Error(
-          responseText ||
-            `Checkout failed (${response.status})`
+      const razorpay =
+        new window.Razorpay(
+          razorpayOptions
         );
-      }
 
-      // Parse only if response has content
-      let data = null;
 
-      if (responseText.trim() !== "") {
-        try {
-          data = JSON.parse(responseText);
-        } catch (jsonError) {
+      // =====================================
+      // PAYMENT FAILED
+      // =====================================
+
+      razorpay.on(
+        "payment.failed",
+        function (
+          response
+        ) {
+
           console.error(
-            "Checkout JSON Parse Error:",
-            jsonError
+            "Razorpay payment failed:",
+            response
           );
 
-          throw new Error(
-            "Invalid response received from Checkout API."
+
+          alert(
+            response?.error?.description ||
+            "Payment failed."
           );
+
+
+          setPlacingOrder(false);
+
         }
-      }
-
-      console.log(
-        "ORDER RESPONSE:",
-        data
       );
 
 
-      // Success
-      if (data && data.id) {
+      razorpay.open();
 
-        alert(
-          `Order placed successfully! Order #${data.id}`
-        );
-
-      } else {
-
-        alert(
-          "Order placed successfully!"
-        );
-
-      }
-
-
-      // Go to Orders page
-      navigate("/orders");
 
     } catch (error) {
 
       console.error(
-        "Checkout error:",
+        "Checkout / Payment error:",
         error
       );
 
+
       alert(
         error.message ||
-          "Unable to place order."
+        "Unable to start payment."
       );
 
-    } finally {
+
       setPlacingOrder(false);
+
     }
+
   };
 
 
-  // =========================
+  // =========================================
   // LOADING
-  // =========================
+  // =========================================
 
   if (loading) {
+
     return (
+
       <div className="checkout-message">
+
         Loading checkout...
+
       </div>
+
     );
+
   }
 
 
-  // =========================
+  // =========================================
   // ERROR
-  // =========================
+  // =========================================
 
   if (error) {
+
     return (
+
       <div className="checkout-message">
 
         <h3>
           {error}
         </h3>
 
+
         <button
-          onClick={() => navigate("/")}
+          onClick={() =>
+            navigate("/")
+          }
         >
           Go Home
         </button>
 
       </div>
+
     );
+
   }
 
 
-  // =========================
-  // CHECKOUT PAGE
-  // =========================
+  // =========================================
+  // UI
+  // =========================================
 
   return (
+
     <section className="checkout-page">
 
       <div className="checkout-container">
 
 
-        {/* =========================
+        {/* =================================
             HEADING
-        ========================= */}
+        ================================= */}
 
         <div className="checkout-heading">
 
@@ -311,12 +765,16 @@ function Checkout() {
         </div>
 
 
+        {/* =================================
+            LAYOUT
+        ================================= */}
+
         <div className="checkout-layout">
 
 
-          {/* =========================
-              ADDRESS SECTION
-          ========================= */}
+          {/* =================================
+              ADDRESS
+          ================================= */}
 
           <div className="address-section">
 
@@ -333,8 +791,6 @@ function Checkout() {
             </div>
 
 
-            {/* NO ADDRESS */}
-
             {addresses.length === 0 ? (
 
               <div className="no-address">
@@ -348,6 +804,7 @@ function Checkout() {
                   address before placing
                   your order.
                 </p>
+
 
                 <button
                   onClick={() =>
@@ -363,95 +820,106 @@ function Checkout() {
 
               <div className="address-list">
 
-                {addresses.map((address) => (
+                {addresses.map(
+                  (address) => (
 
-                  <div
-                    key={address.id}
-                    className={`address-card ${
-                      selectedAddress === address.id
-                        ? "selected"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedAddress(
-                        address.id
-                      )
-                    }
-                  >
+                    <div
+                      key={address.id}
 
-                    {/* Radio */}
+                      className={
+                        `address-card ${
+                          selectedAddress ===
+                          address.id
+                            ? "selected"
+                            : ""
+                        }`
+                      }
 
-                    <div className="address-radio">
+                      onClick={() =>
+                        setSelectedAddress(
+                          address.id
+                        )
+                      }
+                    >
 
-                      <div>
-                        {selectedAddress ===
-                        address.id
-                          ? "✓"
-                          : ""}
+                      <div className="address-radio">
+
+                        <div>
+
+                          {selectedAddress ===
+                          address.id
+                            ? "✓"
+                            : ""}
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="address-details">
+
+                        <h3>
+                          {address.name ||
+                            "Delivery Address"}
+                        </h3>
+
+
+                        {address.address && (
+
+                          <p>
+                            {address.address}
+                          </p>
+
+                        )}
+
+
+                        {address.street && (
+
+                          <p>
+                            {address.street}
+                          </p>
+
+                        )}
+
+
+                        <p>
+
+                          {address.city || ""}
+
+                          {address.city &&
+                          address.state
+                            ? ", "
+                            : ""}
+
+                          {address.state || ""}
+
+                        </p>
+
+
+                        <p>
+
+                          {address.pincode ||
+                            address.zipCode ||
+                            ""}
+
+                        </p>
+
+
+                        {address.phone && (
+
+                          <p>
+                            Phone:{" "}
+                            {address.phone}
+                          </p>
+
+                        )}
+
                       </div>
 
                     </div>
 
-
-                    {/* Address Details */}
-
-                    <div className="address-details">
-
-                      <h3>
-                        {address.name ||
-                          "Delivery Address"}
-                      </h3>
-
-
-                      {address.address && (
-                        <p>
-                          {address.address}
-                        </p>
-                      )}
-
-
-                      {address.street && (
-                        <p>
-                          {address.street}
-                        </p>
-                      )}
-
-
-                      <p>
-
-                        {address.city || ""}
-
-                        {address.city &&
-                        address.state
-                          ? ", "
-                          : ""}
-
-                        {address.state || ""}
-
-                      </p>
-
-
-                      <p>
-
-                        {address.pincode ||
-                          address.zipCode ||
-                          ""}
-
-                      </p>
-
-
-                      {address.phone && (
-                        <p>
-                          Phone:{" "}
-                          {address.phone}
-                        </p>
-                      )}
-
-                    </div>
-
-                  </div>
-
-                ))}
+                  )
+                )}
 
               </div>
 
@@ -460,9 +928,9 @@ function Checkout() {
           </div>
 
 
-          {/* =========================
-              ORDER SUMMARY
-          ========================= */}
+          {/* =================================
+              SUMMARY
+          ================================= */}
 
           <div className="checkout-summary">
 
@@ -502,21 +970,23 @@ function Checkout() {
             <div className="summary-total">
 
               <span>
-                Order
+                Payment
               </span>
 
               <span>
-                From Cart
+                Razorpay
               </span>
 
             </div>
 
 
-            {/* PLACE ORDER */}
-
             <button
               className="place-order-button"
-              onClick={placeOrder}
+
+              onClick={
+                placeOrder
+              }
+
               disabled={
                 !selectedAddress ||
                 placingOrder ||
@@ -525,19 +995,22 @@ function Checkout() {
             >
 
               {placingOrder
-                ? "Placing Order..."
-                : "Place Order"}
+                ? "Opening Payment..."
+                : "Proceed to Payment"}
 
             </button>
 
           </div>
+
 
         </div>
 
       </div>
 
     </section>
+
   );
+
 }
 
 export default Checkout;

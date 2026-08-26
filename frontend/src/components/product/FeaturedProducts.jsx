@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
-import "./FeaturedProducts.css";
+import { useNavigate } from "react-router-dom";
 
+import "./FeaturedProducts.css";
 import ProductCard from "./ProductCard";
 
 function FeaturedProducts() {
 
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+
+  // =====================================
+  // FETCH PRODUCTS
+  // =====================================
 
   useEffect(() => {
 
@@ -19,36 +27,56 @@ function FeaturedProducts() {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch products");
+          throw new Error(
+            "Failed to fetch products"
+          );
         }
 
         const data = await response.json();
 
-        // Remove incomplete products
+
+        // Only valid products
         const validProducts = data.filter(
           (product) =>
             product.title &&
-            product.price >= 0 &&
+            Number(product.price) >= 0 &&
             product.imageUrl
         );
 
-        setProducts(validProducts);
+
+        /*
+         * Home page वर फक्त 6 products
+         * दाखवणार.
+         */
+        setProducts(
+          validProducts.slice(0, 6)
+        );
+
 
       } catch (error) {
 
-        console.error("Product fetch error:", error);
+        console.error(
+          "Featured products error:",
+          error
+        );
 
       } finally {
 
         setLoading(false);
 
       }
+
     };
+
 
     fetchProducts();
 
   }, []);
 
+
+  // =====================================
+  // UI
+  // =====================================
 
   return (
 
@@ -56,61 +84,113 @@ function FeaturedProducts() {
 
       <div className="featured-container">
 
-        {/* Heading */}
+
+        {/* =============================
+            HEADING
+        ============================== */}
 
         <div className="featured-heading">
 
-          <p>OUR COLLECTION</p>
+          <p>
+            SHOPSPHERE PICKS
+          </p>
 
-          <h2>Featured Products</h2>
+          <h2>
+            New Arrivals
+          </h2>
 
           <span>
-            Discover our handpicked styles made for you.
+            Discover styles we think you'll love.
           </span>
 
         </div>
 
 
-        {/* Loading */}
+        {/* =============================
+            LOADING
+        ============================== */}
 
         {loading && (
 
           <div className="products-message">
-            Loading products...
-          </div>
 
-        )}
-
-
-        {/* Products */}
-
-        {!loading && products.length > 0 && (
-
-          <div className="products-grid">
-
-            {products.map((product) => (
-
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-
-            ))}
+            <p>
+              Loading products...
+            </p>
 
           </div>
 
         )}
 
 
-        {/* No Products */}
+        {/* =============================
+            PRODUCTS
+        ============================== */}
 
-        {!loading && products.length === 0 && (
+        {!loading &&
+          products.length > 0 && (
 
-          <div className="products-message">
-            No products available.
-          </div>
+            <div className="products-grid">
 
-        )}
+              {products.map(
+                (product) => (
+
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                  />
+
+                )
+              )}
+
+            </div>
+
+          )}
+
+
+        {/* =============================
+            NO PRODUCTS
+        ============================== */}
+
+        {!loading &&
+          products.length === 0 && (
+
+            <div className="products-message">
+
+              <h3>
+                Products coming soon
+              </h3>
+
+              <p>
+                We're preparing something special for you.
+              </p>
+
+            </div>
+
+          )}
+
+
+        {/* =============================
+            VIEW ALL
+        ============================= */}
+
+        {!loading &&
+          products.length > 0 && (
+
+            <div className="featured-view-all">
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/products")
+                }
+              >
+                View All Products →
+              </button>
+
+            </div>
+
+          )}
 
       </div>
 

@@ -27,8 +27,13 @@ function OrderDetails() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      setError("Please login to view this order.");
+
+      setError(
+        "Please login to view this order."
+      );
+
       setLoading(false);
+
       return;
     }
 
@@ -95,10 +100,12 @@ function OrderDetails() {
         error
       );
 
+
       setError(
         error.message ||
         "Unable to load order."
       );
+
 
     } finally {
 
@@ -114,7 +121,18 @@ function OrderDetails() {
 
   const cancelOrder = async () => {
 
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token");
+
+
+    if (!token) {
+
+      alert(
+        "Please login first."
+      );
+
+      return;
+    }
 
 
     const confirmCancel =
@@ -178,12 +196,84 @@ function OrderDetails() {
         error
       );
 
+
       alert(
         error.message ||
         "Unable to cancel order."
       );
 
     }
+  };
+
+
+  // =========================
+  // FORMAT PRICE
+  // =========================
+
+  const formatPrice = (price) => {
+
+    return Number(
+      price || 0
+    ).toLocaleString("en-IN");
+
+  };
+
+
+  // =========================
+  // FORMAT DATE
+  // =========================
+
+  const formatDate = (date) => {
+
+    if (!date) {
+      return "Unavailable";
+    }
+
+
+    return new Date(
+      date
+    ).toLocaleString(
+      "en-IN",
+      {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }
+    );
+
+  };
+
+
+  // =========================
+  // PAYMENT STATUS
+  // =========================
+
+  const getPaymentStatus = () => {
+
+    if (
+      order?.paymentStatus ===
+      "SUCCESS"
+    ) {
+
+      return "✓ PAID";
+
+    }
+
+
+    if (
+      order?.paymentStatus ===
+      "FAILED"
+    ) {
+
+      return "✕ FAILED";
+
+    }
+
+
+    return (
+      order?.paymentStatus ||
+      "PENDING"
+    );
+
   };
 
 
@@ -195,7 +285,9 @@ function OrderDetails() {
 
     return (
       <div className="order-details-message">
+
         Loading order details...
+
       </div>
     );
 
@@ -214,6 +306,7 @@ function OrderDetails() {
         <h3>
           {error || "Order not found"}
         </h3>
+
 
         <button
           onClick={() =>
@@ -260,9 +353,11 @@ function OrderDetails() {
             ORDER DETAILS
           </p>
 
+
           <h1>
             Order #{order.id}
           </h1>
+
 
         </div>
 
@@ -273,28 +368,26 @@ function OrderDetails() {
 
         <div className="order-info-card">
 
+
+          {/* ORDER DATE */}
+
           <div>
 
             <span>
               Order Date
             </span>
 
+
             <strong>
-              {order.orderDate
-                ? new Date(
-                    order.orderDate
-                  ).toLocaleString(
-                    "en-IN",
-                    {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    }
-                  )
-                : "Unavailable"}
+              {formatDate(
+                order.orderDate
+              )}
             </strong>
 
           </div>
 
+
+          {/* ORDER STATUS */}
 
           <div>
 
@@ -302,11 +395,15 @@ function OrderDetails() {
               Status
             </span>
 
+
             <strong
               className={`details-status ${
                 order.status
                   ?.toLowerCase()
-                  .replace(/\s+/g, "-")
+                  .replace(
+                    /\s+/g,
+                    "-"
+                  )
               }`}
             >
               {order.status}
@@ -315,20 +412,49 @@ function OrderDetails() {
           </div>
 
 
+          {/* PAYMENT STATUS */}
+
+          <div>
+
+            <span>
+              Payment
+            </span>
+
+
+            <strong
+              className={`details-payment-status ${
+                order.paymentStatus
+                  ?.toLowerCase()
+                  .replace(
+                    /\s+/g,
+                    "-"
+                  )
+              }`}
+            >
+              {getPaymentStatus()}
+            </strong>
+
+          </div>
+
+
+          {/* TOTAL */}
+
           <div>
 
             <span>
               Total
             </span>
 
+
             <strong>
               ₹
-              {Number(
-                order.totalPrice || 0
-              ).toLocaleString("en-IN")}
+              {formatPrice(
+                order.totalPrice
+              )}
             </strong>
 
           </div>
+
 
         </div>
 
@@ -339,6 +465,7 @@ function OrderDetails() {
 
         <div className="details-card">
 
+
           <h2>
             Ordered Products
           </h2>
@@ -346,102 +473,132 @@ function OrderDetails() {
 
           <div className="details-items">
 
-            {order.orderItems?.map(
-              (item) => {
+            {order.orderItems &&
+            order.orderItems.length > 0 ? (
 
-                const product =
-                  item.product || {};
+              order.orderItems.map(
+                (item) => {
+
+                  const product =
+                    item.product || {};
 
 
-                return (
+                  return (
 
-                  <div
-                    className="details-item"
-                    key={item.id}
-                  >
+                    <div
+                      className="details-item"
+                      key={item.id}
+                    >
 
-                    <div className="details-item-image">
 
-                      {product.imageUrl ? (
+                      {/* IMAGE */}
 
-                        <img
-                          src={`http://localhost:8080/images/${product.imageUrl}`}
-                          alt={
-                            product.title ||
-                            "Product"
-                          }
-                        />
+                      <div className="details-item-image">
 
-                      ) : (
+                        {product.imageUrl ? (
 
-                        <div>
-                          No Image
-                        </div>
+                          <img
+                            src={`http://localhost:8080/images/${product.imageUrl}`}
+                            alt={
+                              product.title ||
+                              "Product"
+                            }
+                          />
 
-                      )}
+                        ) : (
+
+                          <div>
+                            No Image
+                          </div>
+
+                        )}
+
+                      </div>
+
+
+                      {/* PRODUCT INFO */}
+
+                      <div className="details-item-info">
+
+
+                        <h3>
+                          {product.title ||
+                            "Product"}
+                        </h3>
+
+
+                        <p>
+                          {product.brand ||
+                            ""}
+                        </p>
+
+
+                        <p>
+                          Category:{" "}
+                          {product.category ||
+                            "Product"}
+                        </p>
+
+
+                        <span>
+                          Quantity:{" "}
+                          {item.quantity}
+                        </span>
+
+
+                      </div>
+
+
+                      {/* PRODUCT PRICE */}
+
+                      <div className="details-item-price">
+
+                        ₹
+                        {formatPrice(
+                          item.price
+                        )}
+
+                      </div>
+
 
                     </div>
 
+                  );
 
-                    <div className="details-item-info">
+                }
 
-                      <h3>
-                        {product.title ||
-                          "Product"}
-                      </h3>
+              )
 
-                      <p>
-                        {product.brand ||
-                          ""}
-                      </p>
+            ) : (
 
-                      <p>
-                        Category:{" "}
-                        {product.category ||
-                          "Product"}
-                      </p>
+              <div className="order-details-message">
 
-                      <span>
-                        Quantity:{" "}
-                        {item.quantity}
-                      </span>
+                No products found
+                in this order.
 
-                    </div>
+              </div>
 
-
-                    <div className="details-item-price">
-
-                      ₹
-                      {Number(
-                        item.price || 0
-                      ).toLocaleString(
-                        "en-IN"
-                      )}
-
-                    </div>
-
-                  </div>
-
-                );
-
-              }
             )}
 
           </div>
+
 
         </div>
 
 
         {/* =========================
-            TOTAL
+            PAYMENT SUMMARY
         ========================= */}
 
         <div className="details-card">
+
 
           <h2>
             Payment Summary
           </h2>
 
+
+          {/* ITEMS TOTAL */}
 
           <div className="details-summary-row">
 
@@ -449,21 +606,25 @@ function OrderDetails() {
               Items Total
             </span>
 
+
             <span>
               ₹
-              {Number(
-                order.totalPrice || 0
-              ).toLocaleString("en-IN")}
+              {formatPrice(
+                order.totalPrice
+              )}
             </span>
 
           </div>
 
+
+          {/* SHIPPING */}
 
           <div className="details-summary-row">
 
             <span>
               Shipping
             </span>
+
 
             <span>
               FREE
@@ -475,20 +636,56 @@ function OrderDetails() {
           <div className="details-divider" />
 
 
+          {/* TOTAL */}
+
           <div className="details-total">
 
             <span>
               Total
             </span>
 
+
             <strong>
               ₹
-              {Number(
-                order.totalPrice || 0
-              ).toLocaleString("en-IN")}
+              {formatPrice(
+                order.totalPrice
+              )}
             </strong>
 
           </div>
+
+
+          {/* PAYMENT MESSAGE */}
+
+          <div className="payment-status-message">
+
+            {order.paymentStatus ===
+              "SUCCESS" ? (
+
+              <p>
+                ✓ Payment completed
+                successfully.
+              </p>
+
+            ) : order.paymentStatus ===
+              "FAILED" ? (
+
+              <p>
+                ✕ Payment failed.
+              </p>
+
+            ) : (
+
+              <p>
+                Payment status:{" "}
+                {order.paymentStatus ||
+                  "PENDING"}
+              </p>
+
+            )}
+
+          </div>
+
 
         </div>
 
@@ -498,6 +695,9 @@ function OrderDetails() {
         ========================= */}
 
         <div className="order-actions">
+
+
+          {/* CONTINUE SHOPPING */}
 
           <button
             className="continue-shopping"
@@ -509,24 +709,32 @@ function OrderDetails() {
           </button>
 
 
+          {/* CANCEL */}
+
           {order.status !==
             "CANCELLED" && (
 
             <button
               className="cancel-details-button"
-              onClick={cancelOrder}
+              onClick={
+                cancelOrder
+              }
             >
               Cancel Order
             </button>
 
           )}
 
+
         </div>
+
 
       </div>
 
     </section>
+
   );
+
 }
 
 export default OrderDetails;

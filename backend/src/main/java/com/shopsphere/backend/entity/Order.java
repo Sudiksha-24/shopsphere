@@ -17,9 +17,19 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+    // =========================================
+    // USER
+    // =========================================
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+
+    // =========================================
+    // ORDER ITEMS
+    // =========================================
 
     @OneToMany(
             mappedBy = "order",
@@ -27,13 +37,42 @@ public class Order {
             orphanRemoval = true
     )
     @JsonManagedReference
-    private List<OrderItem> orderItems = new ArrayList<>();
+    private List<OrderItem> orderItems =
+            new ArrayList<>();
 
-    
+
+    // =========================================
+    // ORDER PRICE
+    // =========================================
 
     private Double totalPrice;
 
+
+    // =========================================
+    // ORDER STATUS
+    // =========================================
+    // PLACED
+    // PROCESSING
+    // SHIPPED
+    // DELIVERED
+    // CANCELLED
+
     private String status;
+
+
+    // =========================================
+    // PAYMENT STATUS
+    // =========================================
+    // PENDING
+    // SUCCESS
+    // FAILED
+
+    private String paymentStatus;
+
+
+    // =========================================
+    // ORDER DATE
+    // =========================================
 
     private LocalDateTime orderDate;
 }

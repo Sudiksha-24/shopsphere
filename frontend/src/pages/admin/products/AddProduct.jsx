@@ -237,23 +237,42 @@ function AddProduct() {
 
           {/* CATEGORY */}
 
-          <div className="form-group">
+         <div className="form-group">
 
-            <label>
-              Category
-            </label>
+  <label>
+    Category
+  </label>
 
-            <input
-              type="text"
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              placeholder="e.g. Mobiles"
-              required
-            />
+  <select
+    name="category"
+    value={form.category}
+    onChange={handleChange}
+    required
+  >
 
-          </div>
+    <option value="">
+      Select Category
+    </option>
 
+    <option value="Men">
+      Men
+    </option>
+
+    <option value="Women">
+      Women
+    </option>
+
+    <option value="Shoes">
+      Shoes
+    </option>
+
+    <option value="Accessories">
+      Accessories
+    </option>
+
+  </select>
+
+</div>
 
           {/* PRICE */}
 

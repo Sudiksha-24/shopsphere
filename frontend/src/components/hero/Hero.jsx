@@ -1,14 +1,22 @@
+import { useNavigate } from "react-router-dom";
 import "./Hero.css";
 import HeroImage from "../../assets/images/model.jpg";
 
 function Hero() {
+
+  const navigate = useNavigate();
+
   return (
     <section className="hero">
 
-      {/* Main Hero */}
+      {/* =========================
+          MAIN HERO
+      ========================= */}
+
       <div className="hero-container">
 
         {/* Left Content */}
+
         <div className="hero-content">
 
           <p className="hero-small-text">
@@ -26,13 +34,18 @@ function Hero() {
             delivered to your door.
           </p>
 
-          <button className="hero-button">
+          <button
+            className="hero-button"
+            onClick={() => navigate("/products")}
+          >
             Shop Now →
           </button>
 
         </div>
 
+
         {/* Right Image */}
+
         <div className="hero-image">
 
           <img
@@ -45,7 +58,10 @@ function Hero() {
       </div>
 
 
-      {/* Benefits */}
+      {/* =========================
+          BENEFITS
+      ========================= */}
+
       <div className="hero-benefits">
 
         <div className="benefit">
@@ -55,8 +71,15 @@ function Hero() {
           </span>
 
           <div>
-            <strong>Free Shipping</strong>
-            <p>On orders above ₹999</p>
+
+            <strong>
+              Free Shipping
+            </strong>
+
+            <p>
+              On orders above ₹999
+            </p>
+
           </div>
 
         </div>
@@ -69,8 +92,15 @@ function Hero() {
           </span>
 
           <div>
-            <strong>Secure Payment</strong>
-            <p>100% secure checkout</p>
+
+            <strong>
+              Secure Payment
+            </strong>
+
+            <p>
+              100% secure checkout
+            </p>
+
           </div>
 
         </div>
@@ -83,8 +113,15 @@ function Hero() {
           </span>
 
           <div>
-            <strong>Easy Returns</strong>
-            <p>Hassle-free returns</p>
+
+            <strong>
+              Easy Returns
+            </strong>
+
+            <p>
+              Hassle-free returns
+            </p>
+
           </div>
 
         </div>

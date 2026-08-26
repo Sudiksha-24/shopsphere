@@ -7,4 +7,9 @@ public class PaymentRequest {
 
     private Long orderId;
 
+    private String razorpayPaymentId;
+
+    private String razorpayOrderId;
+
+    private String razorpaySignature;
 }
