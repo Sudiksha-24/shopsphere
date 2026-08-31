@@ -1,0 +1,16 @@
+# Build / extracted files
+backend-app.jar
+backend-app.zip
+jar-check/
+
+# Docker image exports
+*.tar
+
+# Database backup
+shopsphere.sql
+
+# Java / Maven
+backend/target/
+
+# Environment / secrets
+.env
