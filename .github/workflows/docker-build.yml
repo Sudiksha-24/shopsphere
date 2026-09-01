@@ -16,6 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -32,3 +35,17 @@ jobs:
         run: |
           npm install
           npm run build
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: false
+          tags: shopsphere-backend:latest
+
+      - name: Build Frontend Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          tags: shopsphere-frontend:latest
